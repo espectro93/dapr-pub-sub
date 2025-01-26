@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: publisher
+  labels:
+    app: publisher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: publisher
+  template:
+    metadata:
+      labels:
+        app: publisher
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "publisher"
+        dapr.io/app-port: "8080"
+        dapr.io/config: "daprConfig"
+    spec:
+      containers:
+      - name: publisher
+        image: publisher:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: publisher
+spec:
+  selector:
+    app: publisher
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP 

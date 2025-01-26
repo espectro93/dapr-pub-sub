@@ -1,0 +1,4 @@
+rootProject.name = 'dapr-pub-sub'
+
+include 'publisher-service'
+include 'subscriber-service' 

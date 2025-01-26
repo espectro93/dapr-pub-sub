@@ -1,0 +1,12 @@
+version: 1
+common:
+  resourcesPath: ./components/
+apps:
+  - appID: publisher
+    appDirPath: ./publisher-service/build/
+    appPort: 8080
+    command: ["java", "-jar", "quarkus-app/quarkus-run.jar"]
+  - appID: subscriber
+    appDirPath: ./subscriber-service/build/
+    appPort: 8081
+    command: ["java", "-jar", "quarkus-app/quarkus-run.jar"] 
