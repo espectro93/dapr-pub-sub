@@ -25,9 +25,14 @@ public class SubscriberResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Topic(name = "${dapr.pubsub.topic}", pubsubName = "${dapr.pubsub.name}")
     public void receiveMessage(CloudEvent<Message> cloudEvent) {
+        LOG.info("Received cloud event: " + cloudEvent);
         Message message = cloudEvent.getData();
-        LOG.infof("Received message: %s at timestamp: %d", 
-                  message.getContent(), 
-                  message.getTimestamp());
+        if (message != null) {
+            LOG.infof("Received message: %s at timestamp: %d", 
+                      message.getContent(), 
+                      message.getTimestamp());
+        } else {
+            LOG.warn("Received null message data in cloud event");
+        }
     }
 } 

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-alpine
+FROM amazoncorretto:21
 
 WORKDIR /app
 COPY build/quarkus-app/lib/ /app/lib/

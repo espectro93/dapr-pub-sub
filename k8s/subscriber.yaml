@@ -17,7 +17,8 @@ spec:
         dapr.io/enabled: "true"
         dapr.io/app-id: "subscriber"
         dapr.io/app-port: "8081"
-        dapr.io/config: "daprConfig"
+        dapr.io/app-protocol: "http"
+        dapr.io/log-level: "debug"
     spec:
       containers:
       - name: subscriber
@@ -34,6 +35,7 @@ spec:
   selector:
     app: subscriber
   ports:
-  - port: 80
+  - name: http
+    port: 8081
     targetPort: 8081
   type: ClusterIP 

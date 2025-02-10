@@ -28,41 +28,52 @@ Note: Gradle is not required to be installed as we use the Gradle wrapper (`grad
 
 ## Setup Steps
 
-1. Install DAPR on your Kubernetes cluster:
+1. Clean up any existing DAPR installations (if needed):
 ```bash
-# Add and update Helm repo
-helm repo add dapr https://dapr.github.io/helm-charts/
-helm repo update
+# Remove any existing DAPR installations
+dapr uninstall -k --all
 
-# Install DAPR with development components (Redis + Zipkin)
-dapr init -k --dev
+# Verify all DAPR components are removed
+kubectl get pods -n dapr-system
 ```
 
-2. Build the services:
+2. Install DAPR on your Kubernetes cluster:
+```bash
+# Install DAPR with development components (Redis + Zipkin)
+dapr init -k --dev
+
+# Verify DAPR system is running
+kubectl get pods -n dapr-system
+```
+
+3. Build the services:
 ```bash
 ./gradlew clean build
 ```
 
-3. Build Docker images:
+4. Build Docker images:
 ```bash
 # From publisher-service directory
+cd publisher-service
 docker build -t publisher:latest .
-
+cd -
 # From subscriber-service directory
+cd subscriber-service
 docker build -t subscriber:latest .
+cd -
 ```
 
-4. Apply DAPR components and configurations:
+5. Apply DAPR components:
 ```bash
 kubectl apply -f components/
 ```
 
-5. Deploy services:
+6. Deploy services:
 ```bash
 kubectl apply -f k8s/
 ```
 
-6. Verify the deployment:
+7. Verify the deployment:
 ```bash
 kubectl get pods
 ```
@@ -76,11 +87,13 @@ dapr-dev-redis-master-0     1/1     Running   0          5m
 dapr-dev-zipkin-xxx-xxx     1/1     Running   0          5m
 ```
 
+Note: The `2/2` in READY column indicates both the application and DAPR sidecar are running.
+
 ## Testing the Pub/Sub System
 
 1. Port-forward the publisher service:
 ```bash
-kubectl port-forward deployment/publisher 8080:8080
+kubectl port-forward svc/publisher 8080:8080
 ```
 
 2. Send a test message:
@@ -92,24 +105,69 @@ curl -X POST http://localhost:8080/api/messages \
 
 3. Check subscriber logs:
 ```bash
+# Check application logs
 kubectl logs -l app=subscriber -c subscriber
+
+# Check DAPR sidecar logs if needed
+kubectl logs -l app=subscriber -c daprd
 ```
 
 ## Observability
 
 View traces in Zipkin:
 ```bash
-kubectl port-forward svc/zipkin 9411:9411
+# Port forward the Zipkin service
+kubectl port-forward svc/dapr-dev-zipkin 9411:9411
 ```
 Then open http://localhost:9411 in your browser.
 
+You should see the following in Zipkin:
+- Service names: publisher, subscriber
+- Operations: 
+  - /api/messages (Publisher)
+  - /messages (Subscriber)
+- Trace information showing the message flow from publisher to subscriber
+
+## Troubleshooting
+
+1. If pods show `1/1` instead of `2/2`:
+   - Verify DAPR system is running: `kubectl get pods -n dapr-system`
+   - Check pod events: `kubectl describe pod -l app=publisher`
+   - Check DAPR sidecar logs: `kubectl logs -l app=publisher -c daprd`
+
+2. If Redis authentication fails:
+   - The pubsub.yaml is configured to use the Redis password from Kubernetes secrets
+   - Verify Redis is running: `kubectl get pods -l app=dapr-dev-redis-master`
+
 ## Cleanup
 
+1. Remove application deployments:
 ```bash
-# Remove application deployments
 kubectl delete -f k8s/
 kubectl delete -f components/
+```
 
-# Uninstall DAPR
-dapr uninstall -k
+2. Clean up DAPR development components:
+```bash
+# Remove Redis and Zipkin
+kubectl delete deployment,service -l app=dapr-dev-zipkin
+kubectl delete statefulset,service,secret -l app=dapr-dev-redis
+kubectl delete pvc -l app=dapr-dev-redis
+```
+
+3. Uninstall DAPR:
+```bash
+dapr uninstall -k --all
+```
+
+4. Verify cleanup:
+```bash
+# Check for any remaining pods
+kubectl get pods -A | grep -E 'dapr|redis|zipkin'
+
+# Check for any remaining PVCs
+kubectl get pvc
+
+# Check for any remaining Helm releases
+helm ls -A
 ``` 

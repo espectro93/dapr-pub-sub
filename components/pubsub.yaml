@@ -2,14 +2,17 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: pubsub
+  namespace: default
 spec:
   type: pubsub.redis
   version: v1
   metadata:
   - name: redisHost
-    value: localhost:6379
+    value: dapr-dev-redis-master:6379
   - name: redisPassword
-    value: ""
+    secretKeyRef:
+      name: dapr-dev-redis
+      key: redis-password
   - name: enableTLS
     value: "false"
   - name: maxRetries
