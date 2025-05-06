@@ -16,6 +16,10 @@ spec:
   - name: enableTLS
     value: "false"
   - name: maxRetries
-    value: "3"
+    value: "5"
   - name: maxRetryBackoff
-    value: "5s" 
+    value: "10s"
+  - name: redeliverInterval
+    value: "30s"
+  - name: processingTimeout
+    value: "60s"

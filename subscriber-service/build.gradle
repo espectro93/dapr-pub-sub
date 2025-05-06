@@ -11,8 +11,8 @@ dependencies {
     implementation platform('io.quarkus.platform:quarkus-bom:3.7.1')
     implementation 'io.quarkus:quarkus-resteasy-reactive'
     implementation 'io.quarkus:quarkus-resteasy-reactive-jackson'
+    implementation 'io.quarkus:quarkus-opentelemetry'
     implementation 'io.dapr:dapr-sdk:1.11.0'
-    implementation 'io.dapr:dapr-sdk-springboot:1.11.0'
     
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
@@ -26,4 +26,4 @@ java {
 compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs << '-parameters'
-} 
+}

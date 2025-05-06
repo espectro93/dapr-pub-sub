@@ -28,13 +28,29 @@ Note: Gradle is not required to be installed as we use the Gradle wrapper (`grad
 
 ## Setup Steps
 
-1. Clean up any existing DAPR installations (if needed):
+1. Start with a clean slate:
 ```bash
-# Remove any existing DAPR installations
+# Delete any existing deployments
+kubectl delete -f k8s/ 2>/dev/null || true
+kubectl delete -f components/ 2>/dev/null || true
+
+# Remove DAPR and its components
 dapr uninstall -k --all
 
-# Verify all DAPR components are removed
-kubectl get pods -n dapr-system
+# Remove any leftover Redis and Zipkin resources
+kubectl delete deployment,service,secret -l app=dapr-dev-zipkin 2>/dev/null || true
+kubectl delete deployment,service,secret -l app=dapr-dev-redis 2>/dev/null || true
+kubectl delete statefulset,service,secret -l app=dapr-dev-redis 2>/dev/null || true
+kubectl delete pvc -l app=dapr-dev-redis 2>/dev/null || true
+
+# Delete all resources in default namespace with specific labels
+kubectl delete all,secrets,configmaps -l app=publisher -n default 2>/dev/null || true
+kubectl delete all,secrets,configmaps -l app=subscriber -n default 2>/dev/null || true
+kubectl delete all,secrets,configmaps -l app=dapr-dev-redis -n default 2>/dev/null || true
+kubectl delete all,secrets,configmaps -l app=dapr-dev-zipkin -n default 2>/dev/null || true
+
+# Check for any remaining Helm releases and remove if found
+helm ls -A | grep -E 'dapr|redis|zipkin' | awk '{print $1}' | xargs -r helm uninstall
 ```
 
 2. Install DAPR on your Kubernetes cluster:
@@ -42,7 +58,7 @@ kubectl get pods -n dapr-system
 # Install DAPR with development components (Redis + Zipkin)
 dapr init -k --dev
 
-# Verify DAPR system is running
+# Verify DAPR system is running (wait for all pods to be ready)
 kubectl get pods -n dapr-system
 ```
 
@@ -98,7 +114,7 @@ kubectl port-forward svc/publisher 8080:8080
 
 2. Send a test message:
 ```bash
-curl -X POST http://localhost:8080/api/messages \
+curl -v -X POST http://localhost:8080/api/messages \
      -H "Content-Type: application/json" \
      -d '{"content":"Hello DAPR!"}'
 ```
@@ -139,35 +155,7 @@ You should see the following in Zipkin:
    - The pubsub.yaml is configured to use the Redis password from Kubernetes secrets
    - Verify Redis is running: `kubectl get pods -l app=dapr-dev-redis-master`
 
-## Cleanup
-
-1. Remove application deployments:
-```bash
-kubectl delete -f k8s/
-kubectl delete -f components/
-```
-
-2. Clean up DAPR development components:
-```bash
-# Remove Redis and Zipkin
-kubectl delete deployment,service -l app=dapr-dev-zipkin
-kubectl delete statefulset,service,secret -l app=dapr-dev-redis
-kubectl delete pvc -l app=dapr-dev-redis
-```
-
-3. Uninstall DAPR:
-```bash
-dapr uninstall -k --all
-```
-
-4. Verify cleanup:
-```bash
-# Check for any remaining pods
-kubectl get pods -A | grep -E 'dapr|redis|zipkin'
-
-# Check for any remaining PVCs
-kubectl get pvc
-
-# Check for any remaining Helm releases
-helm ls -A
-``` 
+3. If messages aren't being received:
+   - Check subscriber logs: `kubectl logs -l app=subscriber -c subscriber`
+   - Check DAPR sidecar logs: `kubectl logs -l app=subscriber -c daprd`
+   - Verify Redis connection: `kubectl logs -l app=dapr-dev-redis-master`

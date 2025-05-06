@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Configuration
 metadata:
-  name: daprConfig
+  name: dapr.config
   namespace: default
 spec:
   tracing:
@@ -10,7 +10,3 @@ spec:
       endpointAddress: "http://dapr-dev-zipkin.default.svc.cluster.local:9411/api/v2/spans"
   metric:
     enabled: true
-  logging:
-    apiLogging:
-      enabled: true
-    level: debug 

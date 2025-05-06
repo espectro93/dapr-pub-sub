@@ -19,6 +19,7 @@ spec:
         dapr.io/app-port: "8080"
         dapr.io/app-protocol: "http"
         dapr.io/log-level: "debug"
+        dapr.io/config: "dapr.config"  # Add this line to use the tracing config
     spec:
       containers:
       - name: publisher
@@ -38,4 +39,4 @@ spec:
   - name: http
     port: 8080
     targetPort: 8080
-  type: ClusterIP 
+  type: ClusterIP
